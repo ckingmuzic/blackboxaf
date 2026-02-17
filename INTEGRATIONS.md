@@ -38,7 +38,7 @@ Add to your Claude Desktop config (`%APPDATA%\Claude\claude_desktop_config.json`
     "blackboxaf": {
       "command": "python",
       "args": ["-m", "blackboxaf.mcp_server"],
-      "cwd": "G:\\SFPatternVault"
+      "cwd": "C:\\path\\to\\SFPatternVault"
     }
   }
 }
