@@ -12,6 +12,7 @@ build/
 
 # Database (contains extracted patterns from YOUR orgs - never share)
 data/
+!src/blackboxaf/extraction/data/
 *.db
 *.db-shm
 *.db-wal

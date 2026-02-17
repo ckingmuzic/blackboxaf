@@ -1,9 +1,11 @@
 """Anonymization engine for stripping org-specific data from patterns.
 
-Two-level approach:
+Three-level approach:
 1. STRUCTURAL anonymization: strips IDs, emails, URLs, dates, money
-2. BRAND anonymization: detects and replaces business-specific terms
-   (company names, product names, record types) with generic labels
+2. HEURISTIC brand detection: CamelCase analysis, cross-object frequency
+3. DICTIONARY brand detection: cross-references field name segments against
+   a database of 10K+ known company/org names (SEC EDGAR, Fortune 1000,
+   US federal agencies)
 
 The goal: a pattern should reveal WHAT it does structurally,
 never WHO it was built for.
@@ -168,16 +170,22 @@ class BrandScrubber:
                            org_name: str = "") -> list[str]:
         """Auto-detect likely brand/business terms from field names.
 
-        Strategy: Only detect terms that look like product/company names:
-        - CamelCase compound words (AcmeCloud, WidgetCo, ZetaSync)
-        - Terms that appear as a PREFIX across fields on 2+ different objects
-          (indicates a product line, not a generic word)
-        - Managed package namespace prefixes (mkto_si__, bizible2__, etc.)
+        Three detection strategies:
+        1. HEURISTIC: CamelCase compound words that appear as prefixes
+           across 2+ objects (e.g., AcmeCloud on Account + Opportunity)
+        2. NAMESPACE: Managed package namespace prefixes (mkto_si__, etc.)
+        3. DICTIONARY: Cross-reference field segments against a database
+           of 10K+ known company/org names (SEC EDGAR, Fortune 1000,
+           US federal agencies, universities, hospitals)
         """
+        from .company_dict import find_company_matches, is_known_company
+
         # Track which terms appear as field name PREFIXES, grouped by object
         prefix_objects: dict[str, set[str]] = {}
         # Track managed package namespaces
         namespaces: set[str] = set()
+        # Track dictionary matches (company name DB)
+        dict_matches: set[str] = set()
 
         for field in all_field_names:
             if "." in field:
@@ -197,14 +205,14 @@ class BrandScrubber:
                         and not _is_ecosystem_term(ns)
                         and _looks_like_brand_name(ns)):
                     namespaces.add(ns)
-                # Skip managed package field segments - they belong to ISV
-                # packages and aren't org-specific (e.g. UserGem__PastAccount__c)
                 continue
 
             bare = field_name.replace("__c", "").replace("__r", "")
             parts = bare.split("_")
             if not parts:
                 continue
+
+            # ── Strategy 1: Heuristic (CamelCase + cross-object frequency) ──
 
             # Check the FIRST segment as a potential brand prefix
             prefix = parts[0]
@@ -217,7 +225,6 @@ class BrandScrubber:
                 prefix_objects.setdefault(prefix, set()).add(obj)
 
             # Also check ALL segments for CamelCase brand names
-            # (catches org brands embedded mid-field like "Some_BrandName__c")
             for part in parts[1:]:
                 if (len(part) >= 5
                         and part.lower() not in _STRUCTURAL_WORDS
@@ -227,8 +234,16 @@ class BrandScrubber:
                         and _looks_like_brand_name(part)):
                     prefix_objects.setdefault(part, set()).add(obj)
 
-        # A term is a brand if it appears as a prefix on 2+ different objects
-        # Deduplicate case variations (ZetaSync vs ZETASync)
+            # ── Strategy 3: Dictionary (known company names) ──
+            # Check individual segments and multi-word combos
+            for match in find_company_matches(parts):
+                if (match.lower() not in _STRUCTURAL_WORDS
+                        and not _is_ecosystem_term(match)):
+                    dict_matches.add(match)
+
+        # ── Combine results from all strategies ──
+
+        # Heuristic: require 2+ objects
         seen_lower: set[str] = set()
         detected = []
         for term, objects in sorted(prefix_objects.items(),
@@ -237,10 +252,17 @@ class BrandScrubber:
                 detected.append(term)
                 seen_lower.add(term.lower())
 
-        # Add managed package namespaces
+        # Namespaces: always add
         for ns in namespaces:
-            if ns not in detected:
+            if ns.lower() not in seen_lower:
                 detected.append(ns)
+                seen_lower.add(ns.lower())
+
+        # Dictionary: add if not already detected by heuristic
+        for match in sorted(dict_matches):
+            if match.lower() not in seen_lower:
+                detected.append(match)
+                seen_lower.add(match.lower())
 
         if detected:
             self.add_terms(detected)
