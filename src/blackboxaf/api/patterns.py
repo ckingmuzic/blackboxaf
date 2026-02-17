@@ -47,12 +47,18 @@ async def list_patterns(
 
         # Full-text search
         if q:
-            # Use FTS5 for search
-            fts_ids = session.execute(
-                text("SELECT row_id FROM patterns_fts WHERE patterns_fts MATCH :q"),
-                {"q": q},
-            ).fetchall()
-            matching_ids = [row[0] for row in fts_ids]
+            matching_ids = []
+            try:
+                # Escape FTS5 special characters by wrapping each term in quotes
+                safe_q = " ".join(f'"{term}"' for term in q.split() if term)
+                fts_ids = session.execute(
+                    text("SELECT row_id FROM patterns_fts WHERE patterns_fts MATCH :q"),
+                    {"q": safe_q},
+                ).fetchall()
+                matching_ids = [row[0] for row in fts_ids]
+            except Exception:
+                matching_ids = []
+
             if matching_ids:
                 query = query.filter(Pattern.id.in_(matching_ids))
             else:
@@ -62,6 +68,7 @@ async def list_patterns(
                     (Pattern.name.ilike(like_q))
                     | (Pattern.description.ilike(like_q))
                     | (Pattern.source_object.ilike(like_q))
+                    | (Pattern.tags.ilike(like_q))
                 )
 
         total = query.count()
