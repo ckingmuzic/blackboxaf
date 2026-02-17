@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BlackBoxAF - Salesforce Pattern Vault</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<!-- Top Bar -->
+<div class="top-bar">
+    <div class="logo">
+        BlackBox<span style="color:#a855f7">AF</span>
+        <span class="logo-sub">Salesforce Pattern Vault</span>
+    </div>
+
+    <div class="search-box">
+        <input type="text" id="search-input" placeholder="Search patterns... (decisions, validation, opportunity)">
+        <button class="btn-ai" id="ai-search-btn" title="AI-powered natural language search">
+            <span class="ai-icon">&#x2728;</span> Ask AI
+        </button>
+    </div>
+
+    <button class="btn btn-primary" id="ingest-btn">Ingest Project</button>
+</div>
+
+<!-- Stats Bar -->
+<div class="stats-bar">
+    <div>
+        <div class="stat-total" id="stat-total">0</div>
+        <div class="stat-label">Patterns</div>
+    </div>
+    <div id="stat-breakdown"></div>
+</div>
+
+<!-- Filters Bar -->
+<div class="filters-bar">
+    <select id="filter-category">
+        <option value="">All Categories</option>
+    </select>
+    <select id="filter-type">
+        <option value="">All Types</option>
+    </select>
+    <select id="filter-object">
+        <option value="">All Objects</option>
+    </select>
+    <select id="filter-complexity">
+        <option value="">Any Complexity</option>
+        <option value="1">1 - Basic</option>
+        <option value="2">2 - Simple</option>
+        <option value="3">3 - Moderate</option>
+        <option value="4">4 - Complex</option>
+        <option value="5">5 - Expert</option>
+    </select>
+</div>
+
+<!-- Pattern Grid -->
+<div class="pattern-grid" id="pattern-grid">
+    <div class="empty-state">
+        <div class="empty-icon">&#x2B22;</div>
+        <h3>No patterns yet</h3>
+        <p>Click <strong>Ingest Project</strong> to scan an SFDX project and extract patterns.</p>
+    </div>
+</div>
+
+<!-- Pagination -->
+<div class="pagination" id="pagination"></div>
+
+<!-- Modal Overlay -->
+<div class="modal-overlay" id="modal-overlay">
+    <div class="modal-content" id="modal-content"></div>
+</div>
+
+<script src="/js/api.js"></script>
+<script src="/js/inventory.js"></script>
+
+</body>
+</html>

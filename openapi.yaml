@@ -1,0 +1,325 @@
+openapi: 3.1.0
+info:
+  title: BlackBoxAF - Salesforce Pattern Vault
+  description: |
+    Search, browse, and retrieve reusable Salesforce metadata patterns extracted from real orgs.
+    Patterns include flows, validation rules, Apex classes, LWC components, reports, layouts, and field configurations.
+    All patterns are anonymized - no proprietary data, just transferable structural patterns.
+  version: 0.1.0
+  contact:
+    name: C.King
+    url: https://ckingmuzic.com
+
+servers:
+  - url: http://localhost:8000
+    description: Local BlackBoxAF server
+
+paths:
+  /api/patterns:
+    get:
+      operationId: searchPatterns
+      summary: Search and list patterns
+      description: |
+        Search the pattern vault with filters. Use the 'q' parameter for keyword search,
+        or combine filters for precise results. Returns paginated results.
+      parameters:
+        - name: q
+          in: query
+          description: Search query (keywords or phrases)
+          schema:
+            type: string
+        - name: category
+          in: query
+          description: Filter by pattern category
+          schema:
+            type: string
+            enum:
+              - Flow Logic
+              - Data Validation
+              - Data Model
+              - UI Component
+              - Reporting
+              - Page Layout
+              - Apex Logic
+        - name: pattern_type
+          in: query
+          description: Filter by specific pattern type
+          schema:
+            type: string
+        - name: source_object
+          in: query
+          description: Filter by Salesforce object (e.g., Account, Opportunity)
+          schema:
+            type: string
+        - name: min_complexity
+          in: query
+          description: Minimum complexity score (1-5)
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 5
+        - name: max_complexity
+          in: query
+          description: Maximum complexity score (1-5)
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 5
+        - name: favorited
+          in: query
+          description: Filter to favorited patterns only
+          schema:
+            type: boolean
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+            default: 50
+            maximum: 200
+      responses:
+        '200':
+          description: Paginated pattern list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  pages:
+                    type: integer
+                  patterns:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PatternSummary'
+
+  /api/patterns/{pattern_id}:
+    get:
+      operationId: getPattern
+      summary: Get full pattern detail
+      description: Returns complete pattern data including structure JSON, field references, and tags.
+      parameters:
+        - name: pattern_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Full pattern detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PatternDetail'
+        '404':
+          description: Pattern not found
+
+  /api/patterns/{pattern_id}/favorite:
+    post:
+      operationId: toggleFavorite
+      summary: Toggle favorite status
+      parameters:
+        - name: pattern_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Updated favorite status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  favorited:
+                    type: boolean
+
+  /api/stats:
+    get:
+      operationId: getVaultStats
+      summary: Get vault statistics
+      description: Returns total patterns, breakdowns by category/type/object/complexity, and source info.
+      responses:
+        '200':
+          description: Vault statistics
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total_patterns:
+                    type: integer
+                  by_category:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        category:
+                          type: string
+                        count:
+                          type: integer
+                  by_type:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        type:
+                          type: string
+                        count:
+                          type: integer
+
+  /api/filters:
+    get:
+      operationId: getFilterOptions
+      summary: Get available filter values
+      description: Returns all unique categories, pattern types, and objects for building filter dropdowns.
+      responses:
+        '200':
+          description: Filter options
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  categories:
+                    type: array
+                    items:
+                      type: string
+                  pattern_types:
+                    type: array
+                    items:
+                      type: string
+                  objects:
+                    type: array
+                    items:
+                      type: string
+
+  /api/patterns/search/nl:
+    post:
+      operationId: aiSearch
+      summary: AI-powered natural language search
+      description: |
+        Search patterns using natural language queries. Powered by Claude AI.
+        Cost: ~$0.001-0.003 per search. Cached for 24 hours.
+        Requires ANTHROPIC_API_KEY environment variable on the server.
+      parameters:
+        - name: query
+          in: query
+          required: true
+          description: Natural language search query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: AI search results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PatternSummary'
+                  total:
+                    type: integer
+                  query:
+                    type: string
+                  method:
+                    type: string
+        '429':
+          description: Daily cost limit reached
+        '503':
+          description: AI search not configured
+
+  /api/ingest:
+    post:
+      operationId: ingestProject
+      summary: Ingest an SFDX project
+      description: Scan an SFDX project directory and extract patterns into the vault.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                path:
+                  type: string
+                  description: Absolute path to SFDX project directory
+              required:
+                - path
+      responses:
+        '200':
+          description: Ingest results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  patterns_found:
+                    type: integer
+                  errors:
+                    type: array
+                    items:
+                      type: string
+
+components:
+  schemas:
+    PatternSummary:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        pattern_type:
+          type: string
+        category:
+          type: string
+        source_object:
+          type: string
+        complexity_score:
+          type: integer
+        tags:
+          type: array
+          items:
+            type: string
+        favorited:
+          type: boolean
+        use_count:
+          type: integer
+
+    PatternDetail:
+      allOf:
+        - $ref: '#/components/schemas/PatternSummary'
+        - type: object
+          properties:
+            description:
+              type: string
+            structure:
+              type: object
+              description: The full pattern structure as JSON
+            field_references:
+              type: array
+              items:
+                type: string
+            api_version:
+              type: string
+            source_file:
+              type: string
+            source_hash:
+              type: string
+            created_at:
+              type: string
+              format: date-time

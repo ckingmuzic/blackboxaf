@@ -1,0 +1,105 @@
+{
+  "name": "blackboxaf",
+  "displayName": "BlackBoxAF - Salesforce Pattern Vault",
+  "description": "Browse, search, and insert reusable Salesforce metadata patterns directly in VS Code",
+  "version": "0.1.0",
+  "publisher": "cking",
+  "license": "MIT",
+  "icon": "media/icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cking/blackboxaf"
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": ["Other", "Snippets"],
+  "keywords": ["salesforce", "sfdx", "patterns", "flows", "apex", "metadata"],
+  "activationEvents": [],
+  "main": "./out/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "blackboxaf",
+          "title": "BlackBoxAF",
+          "icon": "media/icon-sidebar.svg"
+        }
+      ]
+    },
+    "views": {
+      "blackboxaf": [
+        {
+          "type": "webview",
+          "id": "blackboxaf.patternBrowser",
+          "name": "Pattern Vault"
+        },
+        {
+          "id": "blackboxaf.favorites",
+          "name": "Favorites"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "blackboxaf.searchPatterns",
+        "title": "BlackBoxAF: Search Patterns"
+      },
+      {
+        "command": "blackboxaf.insertPattern",
+        "title": "BlackBoxAF: Insert Pattern at Cursor"
+      },
+      {
+        "command": "blackboxaf.composeFlowSolution",
+        "title": "BlackBoxAF: Compose Solution (Agentforce)"
+      },
+      {
+        "command": "blackboxaf.refreshPatterns",
+        "title": "BlackBoxAF: Refresh Pattern List"
+      },
+      {
+        "command": "blackboxaf.setServerUrl",
+        "title": "BlackBoxAF: Set Server URL"
+      }
+    ],
+    "configuration": {
+      "title": "BlackBoxAF",
+      "properties": {
+        "blackboxaf.serverUrl": {
+          "type": "string",
+          "default": "http://localhost:8000",
+          "description": "URL of the BlackBoxAF server"
+        },
+        "blackboxaf.defaultObject": {
+          "type": "string",
+          "default": "",
+          "description": "Default Salesforce object for searches (e.g., 'Opportunity')"
+        },
+        "blackboxaf.pageSize": {
+          "type": "number",
+          "default": 30,
+          "description": "Number of patterns to show per page"
+        }
+      }
+    },
+    "keybindings": [
+      {
+        "command": "blackboxaf.searchPatterns",
+        "key": "ctrl+shift+b",
+        "mac": "cmd+shift+b"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "package": "npx @vscode/vsce package"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.85.0",
+    "@types/node": "^20.0.0",
+    "typescript": "^5.3.0",
+    "@vscode/vsce": "^2.22.0"
+  }
+}

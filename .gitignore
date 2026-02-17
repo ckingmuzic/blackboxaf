@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+*.egg
+
+# Build artifacts
+dist/
+build/
+*.spec
+
+# Database (contains extracted patterns from YOUR orgs - never share)
+data/
+*.db
+*.db-shm
+*.db-wal
+
+# Environment / secrets
+.env
+.env.*
+
+# VS Code extension build artifacts (source is tracked, compiled output is not)
+vscode-extension/node_modules/
+vscode-extension/out/
+vscode-extension/package-lock.json
+vscode-extension/*.vsix
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
