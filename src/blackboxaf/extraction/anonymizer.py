@@ -135,11 +135,11 @@ class BrandScrubber:
 
     Usage:
         scrubber = BrandScrubber()
-        scrubber.add_terms(["CKMuZicCo", "BrandPay", "QuickCharge", "CASEflow"])
+        scrubber.add_terms(["AcmeCloud", "WidgetCo", "NovaTech", "ZetaSync"])
         # OR auto-detect from field names:
         scrubber.auto_detect_brands(field_names)
 
-        clean_text = scrubber.scrub("CKMuZicCo_Customer_Status__c")
+        clean_text = scrubber.scrub("AcmeCloud_Customer_Status__c")
         # -> "Brand_A_Customer_Status__c"
     """
 
@@ -169,7 +169,7 @@ class BrandScrubber:
         """Auto-detect likely brand/business terms from field names.
 
         Strategy: Only detect terms that look like product/company names:
-        - CamelCase compound words (CKMuZicCo, BrandPay, CASEflow)
+        - CamelCase compound words (AcmeCloud, WidgetCo, ZetaSync)
         - Terms that appear as a PREFIX across fields on 2+ different objects
           (indicates a product line, not a generic word)
         - Managed package namespace prefixes (mkto_si__, bizible2__, etc.)
@@ -228,7 +228,7 @@ class BrandScrubber:
                     prefix_objects.setdefault(part, set()).add(obj)
 
         # A term is a brand if it appears as a prefix on 2+ different objects
-        # Deduplicate case variations (CASEflow vs CASEFlow)
+        # Deduplicate case variations (ZetaSync vs ZETASync)
         seen_lower: set[str] = set()
         detected = []
         for term, objects in sorted(prefix_objects.items(),
@@ -302,8 +302,8 @@ def _looks_like_brand_name(term: str) -> bool:
     """Check if a term looks like a product/company name vs a descriptive field name.
 
     Conservative detection - only flag terms with clear brand indicators:
-    - CamelCase inner capitals (CKMuZicCo, BrandPay)
-    - ALLCAPS-to-lowercase (QuickCharge, CASEflow)
+    - CamelCase inner capitals (AcmeCloud, WidgetCo)
+    - ALLCAPS-to-lowercase (NovaTech, ZetaSync)
     - Mixed letters+numbers (bizible2, mkto71)
 
     Rejects descriptive compound words like IsAPastUser, PastAccount, CreatedById
@@ -318,7 +318,7 @@ def _looks_like_brand_name(term: str) -> bool:
         return False
 
     # Decompose CamelCase into sub-words and check if they're all common
-    # Brand names have unusual sub-words: CK+Muzic+Co, Brand+Pay, User+Gem
+    # Brand names have unusual sub-words: Acme+Cloud, Widget+Co, User+Gem
     # Descriptive names decompose to common words: Past+Account, Created+By+Id
     if has_camel or has_allcaps_lower:
         parts = re.findall(r"[A-Z]+(?=[A-Z][a-z])|[A-Z][a-z]*|[a-z]+", term)
@@ -512,8 +512,8 @@ def anonymize_field_name(field_name: str) -> str:
     """Anonymize a custom field API name while preserving its structural type.
 
     Examples:
-        CKMuZicCo_Customer_Status__c -> Brand_A_Customer_Status__c
-        BrandPay_Product_Tier__c     -> Brand_B_Product_Tier__c
+        AcmeCloud_Customer_Status__c -> Brand_A_Customer_Status__c
+        WidgetCo_Product_Tier__c     -> Brand_B_Product_Tier__c
     """
     scrubber = get_scrubber()
     if scrubber:

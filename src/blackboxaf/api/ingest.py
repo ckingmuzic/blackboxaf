@@ -22,7 +22,7 @@ _ingest_status: dict[str, ScanProgress] = {}
 
 class IngestRequest(BaseModel):
     path: str
-    brand_terms: list[str] | None = None  # Custom terms to scrub (e.g. ["CKMuZicCo", "BrandPay"])
+    brand_terms: list[str] | None = None  # Custom terms to scrub (e.g. ["AcmeCloud", "WidgetCo"])
 
 
 class IngestResponse(BaseModel):

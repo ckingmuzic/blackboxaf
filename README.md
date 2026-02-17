@@ -43,7 +43,7 @@ BlackBoxAF extracts **structural patterns** from Salesforce metadata:
 
 **Before** (raw metadata):
 ```xml
-<field>CKMuZicCo_Customer_Status__c</field>
+<field>AcmeCloud_Customer_Status__c</field>
 <email>jane.doe@client.com</email>
 <recordId>001xx000003DGbQAAW</recordId>
 ```
