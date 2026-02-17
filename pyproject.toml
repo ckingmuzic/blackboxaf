@@ -7,7 +7,7 @@ name = "blackboxaf"
 version = "0.1.0"
 description = "Extract reusable Salesforce metadata patterns from SFDX projects"
 requires-python = ">=3.10"
-authors = [{ name = "C.King" }]
+authors = [{ name = "C.King Muzic LLC" }]
 license = { text = "MIT" }
 readme = "README.md"
 keywords = ["salesforce", "sfdx", "metadata", "patterns", "flows", "apex"]
