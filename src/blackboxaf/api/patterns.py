@@ -37,7 +37,7 @@ async def list_patterns(
         if pattern_type:
             query = query.filter(Pattern.pattern_type == pattern_type)
         if source_object:
-            query = query.filter(Pattern.source_object == source_object)
+            query = query.filter(Pattern.source_object.ilike(f"%{source_object}%"))
         if min_complexity is not None:
             query = query.filter(Pattern.complexity_score >= min_complexity)
         if max_complexity is not None:
