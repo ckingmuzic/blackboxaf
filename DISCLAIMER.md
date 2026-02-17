@@ -120,15 +120,15 @@ By using BlackBoxAF, you agree to indemnify and hold harmless the author from an
 
 ## Governing Law
 
-This disclaimer is governed by the laws of [YOUR STATE/COUNTRY], without regard to conflict of law principles.
+This disclaimer is governed by the laws of the State of Texas, without regard to conflict of law principles.
 
 ---
 
 ## Contact
 
 For questions about appropriate use or legal concerns:
-- Email: [YOUR EMAIL]
-- GitHub: [YOUR GITHUB]
+- Email: C.king@ckingmuzic.com
+- GitHub: github.com/ckingmuzic
 
 ---
 
