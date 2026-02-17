@@ -7,6 +7,8 @@ BlackBoxAF scans Salesforce SFDX projects and builds a searchable catalog of reu
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 
+![BlackBoxAF Inventory Grid](docs/images/hero_inventory.png)
+
 ---
 
 ## Quick Start
@@ -38,6 +40,8 @@ BlackBoxAF extracts **structural patterns** from Salesforce metadata:
 - **Custom Objects & Fields**: Relationships, field types, picklist structures
 - **Reports**: Groupings, filters, custom summary formulas
 - **Page Layouts**: Sections, related lists, quick actions
+
+![Search patterns instantly](docs/images/search_results.png)
 
 ### Anonymization Example
 
@@ -81,6 +85,8 @@ BlackBoxAF extracts, anonymizes, and catalogs them—so you never rebuild from s
 
 **Consultant**: "I need an approval flow with email notification" → search → 12 variations found in 0.02 seconds. **Saves 30-60 minutes per implementation.**
 
+![Pattern detail with structure JSON](docs/images/pattern_detail.png)
+
 ---
 
 ## Architecture
@@ -95,6 +101,20 @@ blackboxaf/
 ```
 
 **Security**: Host header validation, CORS restricted to localhost, binds to `127.0.0.1` only.
+
+---
+
+## VS Code Extension
+
+Browse, search, and insert patterns directly from your IDE.
+
+<img src="docs/images/vscode_extension.png" alt="VS Code Extension Sidebar" width="400">
+
+- Sidebar pattern browser with search and category filters
+- Insert pattern JSON at cursor into any SFDX file
+- Compose multi-component solutions (Agentforce-style)
+- Favorites panel for quick access
+- Also integrates with **Claude**, **Cursor**, **ChatGPT**, and **Windsurf** via MCP
 
 ---
 
