@@ -265,8 +265,8 @@ async function showIngestModal() {
         <p>Enter the path to an SFDX project directory to scan and extract patterns.</p>
 
         <div class="ingest-form">
-            <input type="text" id="ingest-path" placeholder="D:\\sfdx\\bin\\MyProject"
-                   value="D:\\sfdx\\bin\\" class="input-path" />
+            <input type="text" id="ingest-path" placeholder="C:\\Users\\you\\sfdx-projects\\MyProject"
+                   value="" class="input-path" />
             <button class="btn btn-primary" id="btn-start-ingest" onclick="startIngest()">
                 Scan & Extract
             </button>

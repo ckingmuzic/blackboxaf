@@ -22,7 +22,7 @@ _ingest_status: dict[str, ScanProgress] = {}
 
 class IngestRequest(BaseModel):
     path: str
-    brand_terms: list[str] | None = None  # Custom terms to scrub (e.g. ["AffiniPay", "ClientPay"])
+    brand_terms: list[str] | None = None  # Custom terms to scrub (e.g. ["CKMuZicCo", "BrandPay"])
 
 
 class IngestResponse(BaseModel):
@@ -154,7 +154,7 @@ async def ingest_status():
 
 
 @router.get("/projects", response_model=list[ProjectInfo])
-async def list_projects(base_path: str = r"D:\sfdx\bin"):
+async def list_projects(base_path: str = ""):
     """List available SFDX projects in a directory."""
     projects = list_sfdx_projects(base_path)
     return [ProjectInfo(**p) for p in projects]
