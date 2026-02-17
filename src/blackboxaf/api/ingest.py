@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
 from pathlib import Path
 
@@ -29,6 +30,7 @@ class IngestResponse(BaseModel):
     source_id: str
     source_hash: str
     patterns_found: int
+    duplicates_skipped: int = 0
     metadata_counts: dict[str, int]
     errors: list[str]
 
@@ -102,8 +104,28 @@ async def ingest_project(request: IngestRequest):
             session.add(source)
             session.flush()
 
-        # Insert all patterns
+        # Insert patterns, deduplicating across sources
+        inserted = 0
+        duplicates = 0
+
         for extracted in result.patterns:
+            content_hash = Pattern.compute_content_hash(
+                extracted.pattern_type,
+                extracted.source_object,
+                extracted.structure,
+            )
+
+            # Check if an identical pattern already exists from another source
+            existing = session.query(Pattern).filter_by(
+                content_hash=content_hash
+            ).first()
+
+            if existing and existing.source_hash != result.source_hash:
+                # Duplicate from another source — just record provenance
+                existing.add_seen_source(result.source_hash)
+                duplicates += 1
+                continue
+
             pattern = Pattern(
                 pattern_type=extracted.pattern_type,
                 category=extracted.category,
@@ -115,12 +137,16 @@ async def ingest_project(request: IngestRequest):
                 source_hash=extracted.source_hash,
                 source_file=extracted.source_file,
                 source_id=source.id,
+                content_hash=content_hash,
+                seen_in_sources=json.dumps([result.source_hash]),
             )
             pattern.set_structure(extracted.structure)
             pattern.set_field_references(extracted.field_references)
             pattern.set_tags(extracted.tags)
             session.add(pattern)
+            inserted += 1
 
+        source.pattern_count = inserted
         session.commit()
 
         # Rebuild FTS index
@@ -132,7 +158,8 @@ async def ingest_project(request: IngestRequest):
     return IngestResponse(
         source_id=result.source_id,
         source_hash=result.source_hash,
-        patterns_found=len(result.patterns),
+        patterns_found=inserted,
+        duplicates_skipped=duplicates,
         metadata_counts=result.progress.metadata_counts,
         errors=result.progress.errors,
     )
@@ -158,3 +185,74 @@ async def list_projects(base_path: str = ""):
     """List available SFDX projects in a directory."""
     projects = list_sfdx_projects(base_path)
     return [ProjectInfo(**p) for p in projects]
+
+
+@router.post("/dedup")
+async def deduplicate_patterns():
+    """Find and remove duplicate patterns already in the database.
+
+    Computes content_hash for any rows missing it, then removes
+    duplicates keeping the oldest row and merging seen_in_sources.
+    """
+    engine = init_db()
+    session_factory = get_session_factory(engine)
+
+    with session_factory() as session:
+        # Step 1: Backfill content_hash for existing rows that lack it
+        unhashed = session.query(Pattern).filter(
+            (Pattern.content_hash == None) | (Pattern.content_hash == "")  # noqa: E711
+        ).all()
+
+        backfilled = 0
+        for p in unhashed:
+            p.content_hash = Pattern.compute_content_hash(
+                p.pattern_type, p.source_object, p.get_structure()
+            )
+            if not p.seen_in_sources or p.seen_in_sources == "[]":
+                p.seen_in_sources = json.dumps([p.source_hash])
+            backfilled += 1
+
+        if backfilled:
+            session.flush()
+
+        # Step 2: Find duplicate groups (same content_hash, multiple rows)
+        from sqlalchemy import func
+        dupes = (
+            session.query(Pattern.content_hash, func.count(Pattern.id))
+            .filter(Pattern.content_hash != None)  # noqa: E711
+            .group_by(Pattern.content_hash)
+            .having(func.count(Pattern.id) > 1)
+            .all()
+        )
+
+        removed = 0
+        for content_hash, count in dupes:
+            # Get all patterns with this hash, oldest first
+            group = (
+                session.query(Pattern)
+                .filter_by(content_hash=content_hash)
+                .order_by(Pattern.created_at.asc())
+                .all()
+            )
+
+            # Keep the first (oldest), merge provenance from others
+            keeper = group[0]
+            for dup in group[1:]:
+                # Merge seen_in_sources
+                for src in dup.get_seen_in_sources():
+                    keeper.add_seen_source(src)
+                # Preserve favorites and use_count
+                if dup.favorited:
+                    keeper.favorited = True
+                keeper.use_count += dup.use_count
+                session.delete(dup)
+                removed += 1
+
+        session.commit()
+        rebuild_fts(session)
+
+    return {
+        "backfilled_hashes": backfilled,
+        "duplicates_removed": removed,
+        "duplicate_groups": len(dupes),
+    }

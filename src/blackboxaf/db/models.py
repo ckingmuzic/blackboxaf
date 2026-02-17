@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 from datetime import datetime, timezone
 
@@ -67,6 +68,8 @@ class Pattern(Base):
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     favorited = Column(Boolean, default=False)
     use_count = Column(Integer, default=0)
+    content_hash = Column(String(16), nullable=True, index=True)
+    seen_in_sources = Column(Text, default="[]")  # JSON array of source_hashes
 
     source_id = Column(Integer, ForeignKey("sources.id"), nullable=True)
     source = relationship("Source", back_populates="patterns")
@@ -76,6 +79,29 @@ class Pattern(Base):
         Index("idx_pattern_source", "source_hash"),
         Index("idx_pattern_complexity", "complexity_score"),
     )
+
+    @staticmethod
+    def compute_content_hash(pattern_type: str, source_object: str,
+                             structure: dict) -> str:
+        """Compute a hash fingerprint of the pattern's structural content."""
+        canonical = json.dumps({
+            "t": pattern_type,
+            "o": source_object,
+            "s": structure,
+        }, sort_keys=True)
+        return hashlib.sha256(canonical.encode()).hexdigest()[:16]
+
+    def get_seen_in_sources(self) -> list[str]:
+        try:
+            return json.loads(self.seen_in_sources or "[]")
+        except json.JSONDecodeError:
+            return []
+
+    def add_seen_source(self, source_hash: str):
+        sources = self.get_seen_in_sources()
+        if source_hash not in sources:
+            sources.append(source_hash)
+            self.seen_in_sources = json.dumps(sources)
 
     def set_structure(self, data: dict):
         self.structure = json.dumps(data)
@@ -116,6 +142,8 @@ class Pattern(Base):
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "favorited": self.favorited,
             "use_count": self.use_count,
+            "content_hash": self.content_hash,
+            "seen_in_sources": self.get_seen_in_sources(),
         }
 
     def to_summary(self) -> dict:
@@ -131,4 +159,5 @@ class Pattern(Base):
             "tags": self.get_tags(),
             "favorited": self.favorited,
             "use_count": self.use_count,
+            "seen_in_sources": self.get_seen_in_sources(),
         }

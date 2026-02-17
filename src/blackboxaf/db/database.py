@@ -40,6 +40,23 @@ def init_db(engine=None):
 
     Base.metadata.create_all(engine)
 
+    # Migrate: add new columns if they don't exist (safe to re-run)
+    with engine.connect() as conn:
+        try:
+            conn.execute(text(
+                "ALTER TABLE patterns ADD COLUMN content_hash VARCHAR(16)"
+            ))
+            conn.commit()
+        except Exception:
+            conn.rollback()
+        try:
+            conn.execute(text(
+                "ALTER TABLE patterns ADD COLUMN seen_in_sources TEXT DEFAULT '[]'"
+            ))
+            conn.commit()
+        except Exception:
+            conn.rollback()
+
     # Create standalone FTS5 virtual table (not content-synced)
     with engine.connect() as conn:
         conn.execute(text("""
