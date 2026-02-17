@@ -26,6 +26,10 @@ vscode-extension/out/
 vscode-extension/package-lock.json
 vscode-extension/*.vsix
 
+# Internal/personal files (marketing, launch planning)
+marketing/
+LAUNCH_CHECKLIST.md
+
 # OS
 .DS_Store
 Thumbs.db
