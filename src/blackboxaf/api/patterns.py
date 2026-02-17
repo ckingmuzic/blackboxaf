@@ -196,7 +196,7 @@ async def get_filter_options():
         ]
         objects = [
             row[0] for row in
-            session.query(Pattern.source_object).distinct().order_by(Pattern.source_object).limit(100).all()
+            session.query(Pattern.source_object).distinct().order_by(Pattern.source_object).all()
         ]
 
         return {

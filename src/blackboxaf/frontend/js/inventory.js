@@ -50,10 +50,15 @@ function setupEventListeners() {
         currentPage = 1;
         loadPatterns();
     });
-    document.getElementById('filter-object').addEventListener('change', (e) => {
-        currentFilters.source_object = e.target.value;
-        currentPage = 1;
-        loadPatterns();
+    const objectInput = document.getElementById('filter-object');
+    let objectTimeout;
+    objectInput.addEventListener('input', (e) => {
+        clearTimeout(objectTimeout);
+        objectTimeout = setTimeout(() => {
+            currentFilters.source_object = e.target.value;
+            currentPage = 1;
+            loadPatterns();
+        }, 400);
     });
     document.getElementById('filter-complexity').addEventListener('change', (e) => {
         const val = e.target.value;
@@ -89,7 +94,7 @@ async function loadFilters() {
         filtersData = await API.getFilters();
         populateDropdown('filter-category', filtersData.categories);
         populateDropdown('filter-type', filtersData.pattern_types);
-        populateDropdown('filter-object', filtersData.objects);
+        populateDatalist('object-options', filtersData.objects);
     } catch (e) {
         // Filters may fail if DB is empty - that's OK
     }
@@ -104,6 +109,16 @@ function populateDropdown(id, options) {
         el.value = opt;
         el.textContent = opt;
         select.appendChild(el);
+    }
+}
+
+function populateDatalist(id, options) {
+    const datalist = document.getElementById(id);
+    datalist.innerHTML = '';
+    for (const opt of options) {
+        const el = document.createElement('option');
+        el.value = opt;
+        datalist.appendChild(el);
     }
 }
 
