@@ -171,7 +171,7 @@ Help wanted:
 **C.King** - Salesforce Architect, Consultant, Developer
 
 - 🌐 [ckingmuzic.com](https://ckingmuzic.com) - SFDC Services & Multimedia Productions
-- 💼 [LinkedIn](https://linkedin.com/in/cking)
+- 💼 [LinkedIn](https://www.linkedin.com/in/cking27/)
 - 🐙 [GitHub](https://github.com/ckingmuzic)
 
 *If BlackBoxAF saves you time:*
